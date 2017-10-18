@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NFL Field Goals</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Kris Stevens" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# NFL Field Goals
+## For the people
+### Kris Stevens
+### 2017/10/11
+
+---
+
+
+
+
+background-image: url(https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/National_Football_League_logo.svg/179px-National_Football_League_logo.svg.png)
+
+???
+
+Image credit: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sharingan_triple.svg)
+
+---
+class: center, middle
+
+# made with RStudio :: xaringan package
+
+---
+
+# The first step: Physical Data exploration
+
+- ~20,000 Field Goals from 1999 - 2015
+- Lots of weather data missing
+- Temperature, wind speed, and humidity all have impossible values
+- Distance has some NA values that need to be calculated
+- Lots of stadium name changes
+
+
+
+
+---
+
+# Adding in weather data
+
+I found NFL weather data online going back to 1960. In order to merge the data sets I needed unique data in both data sets to combine the data.
+
+--
+
+- Date
+- stadium / Home Team
+
+--
+
+To do this I needed to convert all the stadium names to Team Names. 
+The catch is in the original data set I cannot tell the difference between the Giants and the Jets.
+
+Because of this New York is the combination of the Jets and the Giants.
+
+
+
+
+
+
+
+
+```r
+# Get the Data
+ Weather$home_team[Weather$home_team=='New York Giants']&lt;- 'New York'
+ Weather$home_team[Weather$home_team=='New York Jets']&lt;- 'New York'
+```
+
+
+---
+
+#  Preparing all the stadium data including removal of games played at neutral sites
+
+
+```r
+#Set Stadium to home team name 
+  fgd$stadium&lt;-as.character(fgd$stadium)
+  fgd$stadium&lt;-tolower(fgd$stadium)
+  fgd$stadium[fgd$stadium=="univerity of phoenix stadium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="unviversity of phoenix stadium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix statium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix staduim"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix stadium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="cardinal stadium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="cardinals stadium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="univeristy of phoenix"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="sun devil staduim"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="univeristy of phoenix"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="sun devil stadium"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="sun devil"] &lt;- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="geogia dome"] &lt;- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="george dome"] &lt;- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="georgia dome"] &lt;- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="the georgia dome"] &lt;- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="georgia"] &lt;- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="m &amp; t bank satdium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m&amp;t bank"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m&amp;t stadium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m &amp; t bank"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m&amp;t bank stadium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m &amp; t bank stadium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="ravens stadium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="psinet stadium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="psinet"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="memorial stadium"] &lt;- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="rogers centre"] &lt;- "Buffalo Bills"
+  fgd$stadium[fgd$stadium=="ralph wilson stadium"] &lt;- "Buffalo Bills"
+  fgd$stadium[fgd$stadium=="ralph wilson"] &lt;- "Buffalo Bills"
+  fgd$stadium[fgd$stadium=="first energy stadium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="firstenergy stadium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="bank of america stadiium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="bank of america stadium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="bank of america"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="erricsson stadium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="ericsson stadium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="ericcson stadium"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="ericsson"] &lt;- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="solider field"] &lt;- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="soldier"] &lt;- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="soldier field, chicago"] &lt;- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="soldier field"] &lt;- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="paul brown stadium"] &lt;- "Cincinnati Bengals"
+  fgd$stadium[fgd$stadium=="cinergy field"] &lt;- "Cincinnati Bengals"
+  fgd$stadium[fgd$stadium=="clevelan browns stadium"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland browns stadium"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland browns"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland brown stadium"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland stadium"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland  browns stadium"] &lt;- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="at&amp;t stadium"] &lt;- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="at&amp;t"] &lt;- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="cowboys"] &lt;- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="cowboys stadium"] &lt;- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="texas"] &lt;- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="texas stadium"] &lt;- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="sports authority field"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="sports authority field at mile high"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="invesco field at mile high"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="invesco at mile high"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="mile high stadium"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="mile high stadiumj"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="mile high"] &lt;- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="pontiac silverdome"] &lt;- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="ford field"] &lt;- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="pontiac sliverdome"] &lt;- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="pontiac"] &lt;- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="silverdome"] &lt;- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="lambeau filed"] &lt;- "Green Bay Packers"
+  fgd$stadium[fgd$stadium=="lambeau"] &lt;- "Green Bay Packers"
+  fgd$stadium[fgd$stadium=="lambeau field"] &lt;- "Green Bay Packers"
+  fgd$stadium[fgd$stadium=="nrg"] &lt;- "Houston Texans"
+  fgd$stadium[fgd$stadium=="nrg stadium"] &lt;- "Houston Texans"
+  fgd$stadium[fgd$stadium=="reliant stadium"] &lt;- "Houston Texans"
+  fgd$stadium[fgd$stadium=="reliant"] &lt;- "Houston Texans"
+  fgd$stadium[fgd$stadium=="lucas oil"] &lt;- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="lucas oil stadium"] &lt;- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="rca"] &lt;- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="rca dome"] &lt;- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="alltel stadium"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="everbank"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="everbank field"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltell stadium"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="jacksonville municipal stadium"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltell"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltel"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltell"] &lt;- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="arrowhead stadiium"] &lt;- "Kansas City Chiefs"
+  fgd$stadium[fgd$stadium=="arrowhead stadium"] &lt;- "Kansas City Chiefs"
+  fgd$stadium[fgd$stadium=="arrowhead"] &lt;- "Kansas City Chiefs"
+  fgd$stadium[fgd$stadium=="sunlife stadium"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="sun life stadium"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="land shark stadium"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="dolphins stadium"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="dolphin stadium"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="pro player"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="pro player stadium"] &lt;- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="tcf bank staduim"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="tcf bank stadium"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="mall of america field at hhh metrodome"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="mall of america field at the hhh metrodome"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="mall of america field, hhh metrodome"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="medtrodome"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="metrodome"] &lt;- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="minneapolis"] &lt;- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="metrodome minneapolis"] &lt;- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="husky stadium"] &lt;- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="husky staduim"] &lt;- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="gillette stadium"] &lt;- "New England Patriots"
+  fgd$stadium[fgd$stadium=="foxboro stadium"] &lt;- "New England Patriots"
+  fgd$stadium[fgd$stadium=="foxboro"] &lt;- "New England Patriots"
+  fgd$stadium[fgd$stadium=="metlifestadium"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="metlife"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="the new meadowlands stadium"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="new meadowlands stadium"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="metlife stadium"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="the meadowlands"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="giants stadium"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="meadowlands"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="giants"] &lt;- "New York"
+  fgd$stadium[fgd$stadium=="mercedes-benz superdome"] &lt;- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="mercedez-benz superdome"] &lt;- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="alamo dome"] &lt;- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="tiger stadium"] &lt;- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="alamodome"] &lt;- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="louisiana superdome"] &lt;- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="o.co oakland coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o.co coliseum oakland"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o. co"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o. co coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o.co colisuem"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o.co coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland-alemeda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland -alameda county colisuem"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland alameda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland-alameda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland - alameda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="ooakland -alemeda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland -alameda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland -alemeda county coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="mcafee coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates colisuem"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates coliseuim"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates  coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network  associates coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates coiseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="the coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network association coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates coliseum"] &lt;- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="lincoln finacial field"] &lt;- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="lincoln financial field"] &lt;- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="lincoln financal field"] &lt;- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="veteran's stadium"] &lt;- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="veterans stadium"] &lt;- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="veterans"] &lt;- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="heinz field (64,350)"] &lt;- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="heniz field"] &lt;- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="heinz field"] &lt;- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="at three river stadium"] &lt;- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="three rivers stadium"] &lt;- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="three rivers"] &lt;- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="snapdragon stadium"] &lt;- "San Diego Chargers"
+  fgd$stadium[fgd$stadium=="qualcomm stadium"] &lt;- "San Diego Chargers"
+  fgd$stadium[fgd$stadium=="levi stadium"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="levi's stadium"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3com"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3com park"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="monster park"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3com park at candlestick park"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="san francisco stadium @ candlestick"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="candlestick park"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3compark"] &lt;- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="kingdome"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="qwest field"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centurylink field"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centurylinkfield"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centurylink"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centuryfield"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="qwest fieled"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="qwest stadium"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="seahawks stadium"] &lt;- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="raymond james"] &lt;- "Tampa Bay Buccaneers"
+  fgd$stadium[fgd$stadium=="raymond james stadium"] &lt;- "Tampa Bay Buccaneers"
+  fgd$stadium[fgd$stadium=="nissan stadium"] &lt;- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="lp field"] &lt;- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="adelphia"] &lt;- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="adelphia colisum"] &lt;- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="adelphia coliseum"] &lt;- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="edwards jones dome"] &lt;- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="edward jones dome"] &lt;- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="dome at america's center"] &lt;- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="trans world dome"] &lt;- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="trans world"] &lt;- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="fedex field"] &lt;- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="fedex"] &lt;- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="fedex field"] &lt;- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="redskins stadium"] &lt;- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="redskins"] &lt;- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="fedexfield"] &lt;- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="tom benson hall of fame stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="hall of fame field at fawcett stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="pro football field at fawcett stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="mississippi veterans memorial stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="wembley stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="fawcett stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="fawcett"] &lt;- NA
+  fgd$stadium[fgd$stadium=="fawcett stadium canton ohio"] &lt;- NA
+  fgd$stadium[fgd$stadium=="wembley"] &lt;- NA
+  fgd$stadium[fgd$stadium==""] &lt;- NA
+  fgd$stadium[fgd$stadium=="independence bowl"] &lt;- NA
+  fgd$stadium[fgd$stadium=="tokyo dome"] &lt;- NA
+  fgd$stadium[fgd$stadium=="azteca stadium"] &lt;- NA
+  fgd$stadium[fgd$stadium=="osaka dome"] &lt;- NA
+  fgd$stadium[fgd$stadium=="ross-ade stadium"] &lt;- NA
+
+  #Removing stadium data for exibition sites
+  fgd&lt;-fgd[!is.na(fgd$stadium),]
+```
+
+---
+
+# Merge the datasets
+
+
+
+
+
+```r
+#merge data sets
+fgd&lt;-left_join(fgd, Weather, by = c('home_team', 'date'))
+
+#make line of scrimmage more understandable
+  fgd$yardline&lt;-100-fgd$yardline
+  
+#Clean up NA's in distance
+  fgd$distance[is.na(fgd$distance)]&lt;-18+
+                    fgd$yardline[is.na(fgd$distance)]
+  
+#Make Week Distiguishable based on time of season
+  fgd$season_week&lt;- paste(fgd$season_segment, fgd$season_week)
+```
+
+
+
+---
+
+# More weather data cleaning 
+
+I replaced some missing values with the median values where I did not have weather information that I could extract from either data set. 
+
+Both temperature and wind had values that were well above a reasonable threshold. 
+
+Those values were modified to be what I believe to be close to the correct values.
+
+
+```r
+fgd$wind_mph[is.na(fgd$wind_mph)]&lt;-fgd$wind_speed[is.na(fgd$wind_mph)]
+fgd$wind_mph[is.na(fgd$wind_mph)]&lt;-median(fgd$wind_mph, na.rm = TRUE)
+fgd$wind_mph[fgd$wind_mph&gt;100]&lt;-floor(fgd$wind_mph[fgd$wind_mph&gt;100]/100)
+
+fgd$temperature.y[is.na(fgd$temperature.y)]&lt;-fgd$temperature.x[is.na(fgd$temperature.y)]
+fgd$temperature.y[is.na(fgd$temperature.y)]&lt;-median(fgd$temperature.y, na.rm = TRUE)
+fgd$temperature.y[fgd$temperature.y&gt;120]&lt;-floor(fgd$temperature.y[fgd$temperature.y&gt;120]/100)
+
+fgd$humidity.y[is.na(fgd$humidity.y)]&lt;-fgd$humidity.x[is.na(fgd$humidity.y)]
+fgd$humidity.y[is.na(fgd$humidity.y)]&lt;-median(fgd$humidity.y, na.rm = TRUE)
+```
+
+
+
+---
+class: inverse, middle, center
+
+# The Data is now clean ... enough.
+
+---
+
+# Initial Analysis
+.pull-left[
+![](Edj_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+]
+
+.pull-right[
+The data is biased. There are 4 times more makes than misses in the NFL from '99-'15. 
+
+Any modeling that is done will need to compensate for this as 81% of the attempts were makes.
+
+
+```r
+sum(fieldgoaldata$Success=="t")/nrow(fieldgoaldata)
+```
+
+```
+## [1] 0.8136293
+```
+]
+
+---
+
+# Total field goals by year
+
+![](Edj_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+---
+
+# Misses per year
+
+![](Edj_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+---
+
+# Makes per year
+
+![](Edj_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
+
+---
+
+# NFL is getting better at kicking
+
+![](Edj_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+
+---
+
+# The longer the kick, the more missed
+
+![](Edj_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
+
+---
+
+# What is with 7 MPH Wind speed?
+
+![](Edj_files/figure-html/unnamed-chunk-18-1.png)&lt;!-- --&gt;
+
+---
+
+# Temperature skewed by indoor stadiums
+
+![](Edj_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+---
+# Stadium effect on field goals attempted
+.pull-left[
+![](Edj_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+]
+.pull-right[
+The percentage of stadiums that are indoor 
+
+```
+## [1] 42
+```
+
+is similar to the number of field goals kicked indoors
+
+```
+## [1] 41
+```
+]
+---
+
+# Note the slightly higher accuracy indoors
+![](Edj_files/figure-html/unnamed-chunk-23-1.png)&lt;!-- --&gt;
+---
+
+# Field Goals for the win?
+
+![](Edj_files/figure-html/unnamed-chunk-24-1.png)&lt;!-- --&gt;
+
+---
+# Week dependent Field Goals
+
+![](Edj_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
+
+---
+
+# fin.
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {window.dispatchEvent(new Event('resize'));});
+(function() {var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler"); if (!r) return; s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }"; d.head.appendChild(s);})();</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+  }
+});
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://cdn.bootcss.com/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

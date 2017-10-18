@@ -1,0 +1,574 @@
+---
+title: "NFL Field Goals"
+subtitle: "For the people"
+author: "Kris Stevens"
+date: "2017/10/11"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+background-image: url(https://upload.wikimedia.org/wikipedia/en/thumb/a/a2/National_Football_League_logo.svg/179px-National_Football_League_logo.svg.png)
+
+???
+
+Image credit: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sharingan_triple.svg)
+
+---
+class: center, middle
+
+# made with RStudio :: xaringan package
+
+---
+
+# The first step: Physical Data exploration
+
+- ~20,000 Field Goals from 1999 - 2015
+- Lots of weather data missing
+- Temperature, wind speed, and humidity all have impossible values
+- Distance has some NA values that need to be calculated
+- Lots of stadium name changes
+
+```{r, echo = FALSE, message= FALSE, warning=FALSE}
+library(tidyverse)
+library(ggthemes)
+# Get the Data
+fgd<-read.csv("field_goal_exer.csv")
+```
+
+
+---
+
+# Adding in weather data
+
+I found NFL weather data online going back to 1960. In order to merge the data sets I needed unique data in both data sets to combine the data.
+
+--
+
+- Date
+- stadium / Home Team
+
+--
+
+To do this I needed to convert all the stadium names to Team Names. 
+The catch is in the original data set I cannot tell the difference between the Giants and the Jets.
+
+Because of this New York is the combination of the Jets and the Giants.
+
+
+
+```{r, echo = FALSE, message = FALSE}
+# Get the Data
+Weather<-read.csv("NFL Weather.csv")
+```
+
+```{r, echo = FALSE, message= FALSE, warning=FALSE}
+#Convert Weather Home Teams to character
+Weather$home_team<-as.character(Weather$home_team)
+```
+
+```{r, message = FALSE}
+# Get the Data
+ Weather$home_team[Weather$home_team=='New York Giants']<- 'New York'
+ Weather$home_team[Weather$home_team=='New York Jets']<- 'New York'
+```
+
+
+---
+
+#  Preparing all the stadium data including removal of games played at neutral sites
+
+```{r, message = FALSE}
+#Set Stadium to home team name 
+  fgd$stadium<-as.character(fgd$stadium)
+  fgd$stadium<-tolower(fgd$stadium)
+  fgd$stadium[fgd$stadium=="univerity of phoenix stadium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="unviversity of phoenix stadium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix statium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix staduim"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="university of phoenix stadium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="cardinal stadium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="cardinals stadium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="univeristy of phoenix"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="sun devil staduim"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="univeristy of phoenix"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="sun devil stadium"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="sun devil"] <- "Arizona Cardinals"
+  fgd$stadium[fgd$stadium=="geogia dome"] <- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="george dome"] <- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="georgia dome"] <- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="the georgia dome"] <- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="georgia"] <- "Atlanta Falcons"
+  fgd$stadium[fgd$stadium=="m & t bank satdium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m&t bank"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m&t stadium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m & t bank"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m&t bank stadium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="m & t bank stadium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="ravens stadium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="psinet stadium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="psinet"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="memorial stadium"] <- "Baltimore Ravens"
+  fgd$stadium[fgd$stadium=="rogers centre"] <- "Buffalo Bills"
+  fgd$stadium[fgd$stadium=="ralph wilson stadium"] <- "Buffalo Bills"
+  fgd$stadium[fgd$stadium=="ralph wilson"] <- "Buffalo Bills"
+  fgd$stadium[fgd$stadium=="first energy stadium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="firstenergy stadium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="bank of america stadiium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="bank of america stadium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="bank of america"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="erricsson stadium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="ericsson stadium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="ericcson stadium"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="ericsson"] <- "Carolina Panthers"
+  fgd$stadium[fgd$stadium=="solider field"] <- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="soldier"] <- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="soldier field, chicago"] <- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="soldier field"] <- "Chicago Bears"
+  fgd$stadium[fgd$stadium=="paul brown stadium"] <- "Cincinnati Bengals"
+  fgd$stadium[fgd$stadium=="cinergy field"] <- "Cincinnati Bengals"
+  fgd$stadium[fgd$stadium=="clevelan browns stadium"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland browns stadium"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland browns"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland brown stadium"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland stadium"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="cleveland  browns stadium"] <- "Cleveland Browns"
+  fgd$stadium[fgd$stadium=="at&t stadium"] <- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="at&t"] <- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="cowboys"] <- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="cowboys stadium"] <- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="texas"] <- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="texas stadium"] <- "Dallas Cowboys"
+  fgd$stadium[fgd$stadium=="sports authority field"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="sports authority field at mile high"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="invesco field at mile high"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="invesco at mile high"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="mile high stadium"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="mile high stadiumj"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="mile high"] <- "Denver Broncos"
+  fgd$stadium[fgd$stadium=="pontiac silverdome"] <- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="ford field"] <- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="pontiac sliverdome"] <- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="pontiac"] <- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="silverdome"] <- "Detroit Lions"
+  fgd$stadium[fgd$stadium=="lambeau filed"] <- "Green Bay Packers"
+  fgd$stadium[fgd$stadium=="lambeau"] <- "Green Bay Packers"
+  fgd$stadium[fgd$stadium=="lambeau field"] <- "Green Bay Packers"
+  fgd$stadium[fgd$stadium=="nrg"] <- "Houston Texans"
+  fgd$stadium[fgd$stadium=="nrg stadium"] <- "Houston Texans"
+  fgd$stadium[fgd$stadium=="reliant stadium"] <- "Houston Texans"
+  fgd$stadium[fgd$stadium=="reliant"] <- "Houston Texans"
+  fgd$stadium[fgd$stadium=="lucas oil"] <- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="lucas oil stadium"] <- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="rca"] <- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="rca dome"] <- "Indianapolis Colts"
+  fgd$stadium[fgd$stadium=="alltel stadium"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="everbank"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="everbank field"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltell stadium"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="jacksonville municipal stadium"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltell"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltel"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="alltell"] <- "Jacksonville Jaguars"
+  fgd$stadium[fgd$stadium=="arrowhead stadiium"] <- "Kansas City Chiefs"
+  fgd$stadium[fgd$stadium=="arrowhead stadium"] <- "Kansas City Chiefs"
+  fgd$stadium[fgd$stadium=="arrowhead"] <- "Kansas City Chiefs"
+  fgd$stadium[fgd$stadium=="sunlife stadium"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="sun life stadium"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="land shark stadium"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="dolphins stadium"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="dolphin stadium"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="pro player"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="pro player stadium"] <- "Miami Dolphins"
+  fgd$stadium[fgd$stadium=="tcf bank staduim"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="tcf bank stadium"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="mall of america field at hhh metrodome"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="mall of america field at the hhh metrodome"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="mall of america field, hhh metrodome"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="medtrodome"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="metrodome"] <- "Minnesota Vikings" 
+  fgd$stadium[fgd$stadium=="minneapolis"] <- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="metrodome minneapolis"] <- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="husky stadium"] <- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="husky staduim"] <- "Minnesota Vikings"
+  fgd$stadium[fgd$stadium=="gillette stadium"] <- "New England Patriots"
+  fgd$stadium[fgd$stadium=="foxboro stadium"] <- "New England Patriots"
+  fgd$stadium[fgd$stadium=="foxboro"] <- "New England Patriots"
+  fgd$stadium[fgd$stadium=="metlifestadium"] <- "New York"
+  fgd$stadium[fgd$stadium=="metlife"] <- "New York"
+  fgd$stadium[fgd$stadium=="the new meadowlands stadium"] <- "New York"
+  fgd$stadium[fgd$stadium=="new meadowlands stadium"] <- "New York"
+  fgd$stadium[fgd$stadium=="metlife stadium"] <- "New York"
+  fgd$stadium[fgd$stadium=="the meadowlands"] <- "New York"
+  fgd$stadium[fgd$stadium=="giants stadium"] <- "New York"
+  fgd$stadium[fgd$stadium=="meadowlands"] <- "New York"
+  fgd$stadium[fgd$stadium=="giants"] <- "New York"
+  fgd$stadium[fgd$stadium=="mercedes-benz superdome"] <- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="mercedez-benz superdome"] <- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="alamo dome"] <- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="tiger stadium"] <- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="alamodome"] <- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="louisiana superdome"] <- "New Orleans Saints"
+  fgd$stadium[fgd$stadium=="o.co oakland coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o.co coliseum oakland"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o. co"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o. co coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o.co colisuem"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="o.co coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland-alemeda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland -alameda county colisuem"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland alameda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland-alameda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland - alameda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="ooakland -alemeda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland -alameda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="oakland -alemeda county coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="mcafee coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates colisuem"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates coliseuim"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates  coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network  associates coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates coiseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="the coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network association coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="network associates coliseum"] <- "Oakland Raiders"
+  fgd$stadium[fgd$stadium=="lincoln finacial field"] <- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="lincoln financial field"] <- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="lincoln financal field"] <- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="veteran's stadium"] <- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="veterans stadium"] <- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="veterans"] <- "Philadelphia Eagles"
+  fgd$stadium[fgd$stadium=="heinz field (64,350)"] <- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="heniz field"] <- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="heinz field"] <- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="at three river stadium"] <- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="three rivers stadium"] <- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="three rivers"] <- "Pittsburgh Steelers"
+  fgd$stadium[fgd$stadium=="snapdragon stadium"] <- "San Diego Chargers"
+  fgd$stadium[fgd$stadium=="qualcomm stadium"] <- "San Diego Chargers"
+  fgd$stadium[fgd$stadium=="levi stadium"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="levi's stadium"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3com"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3com park"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="monster park"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3com park at candlestick park"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="san francisco stadium @ candlestick"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="candlestick park"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="3compark"] <- "San Francisco 49ers"
+  fgd$stadium[fgd$stadium=="kingdome"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="qwest field"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centurylink field"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centurylinkfield"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centurylink"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="centuryfield"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="qwest fieled"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="qwest stadium"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="seahawks stadium"] <- "Seattle Seahawks"
+  fgd$stadium[fgd$stadium=="raymond james"] <- "Tampa Bay Buccaneers"
+  fgd$stadium[fgd$stadium=="raymond james stadium"] <- "Tampa Bay Buccaneers"
+  fgd$stadium[fgd$stadium=="nissan stadium"] <- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="lp field"] <- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="adelphia"] <- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="adelphia colisum"] <- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="adelphia coliseum"] <- "Tennessee Titans"
+  fgd$stadium[fgd$stadium=="edwards jones dome"] <- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="edward jones dome"] <- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="dome at america's center"] <- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="trans world dome"] <- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="trans world"] <- "St. Louis Rams"
+  fgd$stadium[fgd$stadium=="fedex field"] <- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="fedex"] <- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="fedex field"] <- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="redskins stadium"] <- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="redskins"] <- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="fedexfield"] <- "Washington Redskins"
+  fgd$stadium[fgd$stadium=="tom benson hall of fame stadium"] <- NA
+  fgd$stadium[fgd$stadium=="hall of fame field at fawcett stadium"] <- NA
+  fgd$stadium[fgd$stadium=="pro football field at fawcett stadium"] <- NA
+  fgd$stadium[fgd$stadium=="mississippi veterans memorial stadium"] <- NA
+  fgd$stadium[fgd$stadium=="wembley stadium"] <- NA
+  fgd$stadium[fgd$stadium=="fawcett stadium"] <- NA
+  fgd$stadium[fgd$stadium=="fawcett"] <- NA
+  fgd$stadium[fgd$stadium=="fawcett stadium canton ohio"] <- NA
+  fgd$stadium[fgd$stadium=="wembley"] <- NA
+  fgd$stadium[fgd$stadium==""] <- NA
+  fgd$stadium[fgd$stadium=="independence bowl"] <- NA
+  fgd$stadium[fgd$stadium=="tokyo dome"] <- NA
+  fgd$stadium[fgd$stadium=="azteca stadium"] <- NA
+  fgd$stadium[fgd$stadium=="osaka dome"] <- NA
+  fgd$stadium[fgd$stadium=="ross-ade stadium"] <- NA
+
+  #Removing stadium data for exibition sites
+  fgd<-fgd[!is.na(fgd$stadium),]
+```
+
+---
+
+# Merge the datasets
+
+```{r, echo = FALSE, message= FALSE, warning=FALSE}
+#Convert dates to dates
+fgd$schedule_date<-as.Date(fgd$schedule_date)
+Weather$date<- as.Date(Weather$date, "%m/%d/%Y")
+
+#Convert Home Team to Character
+Weather$home_team<- as.character(Weather$home_team)
+
+#Limit the data set to from 1999 on.
+Weather<-Weather[Weather$date>= "1999-09-12",]
+Weather$wind_mph[is.na(Weather$wind_mph)]<-0
+
+#Set the column names
+colnames(Weather)[2]<- "home_team"
+colnames(fgd)[4]<-"date"
+colnames(fgd)[14]<-"home_team"
+```
+
+
+```{r, message = FALSE}
+#merge data sets
+fgd<-left_join(fgd, Weather, by = c('home_team', 'date'))
+
+#make line of scrimmage more understandable
+  fgd$yardline<-100-fgd$yardline
+  
+#Clean up NA's in distance
+  fgd$distance[is.na(fgd$distance)]<-18+
+                    fgd$yardline[is.na(fgd$distance)]
+  
+#Make Week Distiguishable based on time of season
+  fgd$season_week<- paste(fgd$season_segment, fgd$season_week)
+```
+
+```{r, echo = FALSE, message= FALSE, warning=FALSE}
+fgd$temperature.x<-as.numeric(fgd$temperature.x)
+fgd$temperature.y<-as.numeric(fgd$temperature.y)
+fgd$humidity.x<- as.numeric(fgd$humidity.x)
+fgd$humidity.y<- as.numeric(fgd$humidity.y)
+fgd$scoredif <- fgd$off_score-fgd$def_score
+```
+
+---
+
+# More weather data cleaning 
+
+I replaced some missing values with the median values where I did not have weather information that I could extract from either data set. 
+
+Both temperature and wind had values that were well above a reasonable threshold. 
+
+Those values were modified to be what I believe to be close to the correct values.
+
+```{r, message = FALSE}
+fgd$wind_mph[is.na(fgd$wind_mph)]<-fgd$wind_speed[is.na(fgd$wind_mph)]
+fgd$wind_mph[is.na(fgd$wind_mph)]<-median(fgd$wind_mph, na.rm = TRUE)
+fgd$wind_mph[fgd$wind_mph>100]<-floor(fgd$wind_mph[fgd$wind_mph>100]/100)
+
+fgd$temperature.y[is.na(fgd$temperature.y)]<-fgd$temperature.x[is.na(fgd$temperature.y)]
+fgd$temperature.y[is.na(fgd$temperature.y)]<-median(fgd$temperature.y, na.rm = TRUE)
+fgd$temperature.y[fgd$temperature.y>120]<-floor(fgd$temperature.y[fgd$temperature.y>120]/100)
+
+fgd$humidity.y[is.na(fgd$humidity.y)]<-fgd$humidity.x[is.na(fgd$humidity.y)]
+fgd$humidity.y[is.na(fgd$humidity.y)]<-median(fgd$humidity.y, na.rm = TRUE)
+```
+
+
+```{r, echo = FALSE, message= FALSE, warning=FALSE}
+fgd%>%
+  select(season_year, season_week, kicker_id, is_home_team, home_team, distance, quarter, stadium_type, scoredif, temperature.y, wind_mph, humidity.y, success)-> fieldgoaldata
+
+colnames(fieldgoaldata)<- c("Year", "Week", "Kicker", "atHome","HomeTeam", "Distance", "Quarter", "Stadium", "ScoreDif", "Temperature", "Wind", "Humidity", "Success")
+
+fieldgoaldata$Stadium[fieldgoaldata$Stadium!="Outdoor"] <- "Indoor"
+fieldgoaldata$Stadium<-(as.character(fieldgoaldata$Stadium))
+
+
+
+```
+---
+class: inverse, middle, center
+
+# The Data is now clean ... enough.
+
+---
+
+# Initial Analysis
+.pull-left[
+```{r, echo = FALSE, message = FALSE}
+fieldgoaldata%>%
+  group_by(Success)%>%
+  ggplot(aes(x= Success, fill= Success))+geom_bar()+ theme_fivethirtyeight()+
+  scale_x_discrete(labels= c("","")) + scale_fill_discrete(name="",labels=c("Missed", "Make"))
+```
+]
+
+.pull-right[
+The data is biased. There are 4 times more makes than misses in the NFL from '99-'15. 
+
+Any modeling that is done will need to compensate for this as 81% of the attempts were makes.
+
+```{r}
+sum(fieldgoaldata$Success=="t")/nrow(fieldgoaldata)
+
+```
+]
+
+---
+
+# Total field goals by year
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fieldgoaldata%>%
+  ggplot(aes(x= Year,  fill=Success, Main="Number of Makes per year"))+geom_bar()+ theme_fivethirtyeight()+ 
+  scale_y_continuous( limits = c(0,1500))+ scale_fill_discrete(name="",labels=c("Missed", "Make"))
+  
+```
+---
+
+# Misses per year
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fieldgoaldata%>%
+  filter(Success == 'f')%>%
+  ggplot(aes(x= Year, fill= Success, Main="Number of Misses per year")) + geom_histogram(binwidth = 0.5)+ scale_y_continuous( limits = c(0,1200)) + theme_fivethirtyeight()+ 
+  guides(fill="none")
+  
+```
+---
+
+# Makes per year
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fieldgoaldata%>%
+  filter(Success == 't')%>%
+  ggplot(aes(x= Year, fill=I("#56B4E9"), Main="Number of Makes per year"))+geom_histogram(binwidth = .5 )+ theme_fivethirtyeight()+ 
+  guides(fill="none")+ scale_y_continuous( limits = c(0,1200))
+  
+```
+
+---
+
+# NFL is getting better at kicking
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+  as.data.frame(prop.table(table(fieldgoaldata$Year, fieldgoaldata$Success),1))->fgd1
+
+fgd1%>%
+  ggplot(aes(x=Var1, y=Freq, color=Var2, group=Var2))+geom_line(size = 2)+ scale_y_continuous(labels=scales::percent) + theme_fivethirtyeight() + theme(legend.position = "none")
+
+```
+
+---
+
+# The longer the kick, the more missed
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+fieldgoaldata%>%
+  group_by(Distance)%>%
+  ggplot(aes(x= Distance, fill= Success))+geom_bar()+ theme_fivethirtyeight()+ scale_fill_discrete(name="",labels=c("Missed", "Make"))
+
+```
+
+---
+
+# What is with 7 MPH Wind speed?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+fieldgoaldata%>%
+  group_by(Wind)%>%
+  ggplot(aes(x= Wind, fill= Success))+geom_bar()+ theme_fivethirtyeight()+ scale_fill_discrete(name="",labels=c("Missed", "Make"))
+
+```
+
+---
+
+# Temperature skewed by indoor stadiums
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+fieldgoaldata%>%
+  group_by(Temperature)%>%
+  ggplot(aes(x= Temperature, fill= Success))+geom_bar()+ theme_fivethirtyeight()+ scale_fill_discrete(name="",labels=c("Missed", "Make"))
+
+```
+
+---
+# Stadium effect on field goals attempted
+.pull-left[
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+fieldgoaldata%>%
+  group_by(Stadium)%>%
+  ggplot(aes(x= Stadium, fill= Success))+geom_bar()+ theme_fivethirtyeight()+ scale_fill_discrete(name="",labels=c("Missed", "Make"))
+
+```
+]
+.pull-right[
+The percentage of stadiums that are indoor 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+round(n_distinct(unique(fieldgoaldata$HomeTeam[fgd$stadium=="Indoor"]))/n_distinct(unique(fieldgoaldata$HomeTeam))*100)
+```
+
+is similar to the number of field goals kicked indoors
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+round(sum(fieldgoaldata$Stadium=="Indoor")/(sum(fieldgoaldata$Stadium=="Indoor")+sum(fieldgoaldata$Stadium=="Outdoor"))*100)
+
+```
+]
+---
+
+# Note the slightly higher accuracy indoors
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+  as.data.frame(prop.table(table(fieldgoaldata$Stadium, fieldgoaldata$Success),1))->fgd2
+
+fgd2%>%
+  filter(Var2=='t')%>%
+  group_by(Var1)%>%
+  ggplot(aes(x= Var1, y=Freq*100, color=Var1, size=2))+
+  geom_point()+ theme_fivethirtyeight()+ 
+  scale_y_continuous( limits = c(50,100))+ guides(fill="none")
+
+```
+---
+
+# Field Goals for the win?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+fieldgoaldata%>%
+  group_by(Quarter)%>%
+  ggplot(aes(x= Quarter, fill= Success))+geom_bar()+ theme_fivethirtyeight()+ scale_fill_discrete(name="",labels=c("Missed", "Make"))
+
+```
+
+---
+# Week dependent Field Goals
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+fieldgoaldata%>%
+  group_by(Week)%>%
+  ggplot(aes(x= Week, fill= Success))+geom_bar()+ theme_fivethirtyeight()+ scale_fill_discrete(name="",labels=c("Missed", "Make"))+
+  scale_x_discrete(labels= c("Post Season","","","","","","Preseason","","","","","Regular Season","","","","","","","","","","","","","",""))
+
+```
+
+---
+
+# fin.
